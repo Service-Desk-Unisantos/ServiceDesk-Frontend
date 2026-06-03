@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meu chamado — ServiceDesk Facul</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../../assets/css/base.css">
+    <link rel="stylesheet" href="../../../assets/css/lista.css">
+    <style>
+        .chat-bubble { border-radius: 12px; max-width: 80%; }
+        .chat-admin   { background: #e9ecef; }
+        .chat-cliente { background: #d1e7ff; }
+        .rotulo-secao { font-size: .78rem; letter-spacing: .06em; }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/pages/dashboard/index.html">
+            <i class="bi bi-headset me-2 text-primary"></i>ServiceDesk Facul
+        </a>
+        <div class="text-white d-flex align-items-center">
+            <span class="me-2 small text-white-50">Logado como:</span>
+            <span class="fw-bold me-3 text-info" id="navbar-username"></span>
+            <span class="badge bg-success shadow-sm px-3 py-2 d-none" id="navbar-badge-cliente">
+                <i class="bi bi-person-fill me-1"></i>CLIENTE
+            </span>
+            <a href="#" id="btn-logout" class="ms-3 btn btn-sm btn-outline-danger border-0 fw-bold">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Caixa de notificações -->
+<div id="caixa-notificacoes" class="position-fixed top-0 end-0 p-3"
+     style="z-index:1080; width:min(92vw,380px); pointer-events:none;"></div>
+
+<main class="container">
+    <div id="mensagens"></div>
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/pages/meus-chamados/index.html" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-ticket-detailed me-2 text-primary"></i>
+            Chamado <span id="chamado-id" class="text-muted">#</span>: <span id="chamado-titulo"></span>
+        </h5>
+    </div>
+
+    <div class="card page-card mb-4">
+        <div class="card-body">
+            <div class="row small mb-3">
+                <div class="col-6 col-md-3">
+                    <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-1">Categoria</p>
+                    <p class="mb-0" id="info-categoria"></p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-1">Prioridade</p>
+                    <p class="mb-0" id="info-prioridade"></p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-1">Status</p>
+                    <p class="mb-0" id="info-status"></p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-1">Aberto em</p>
+                    <p class="mb-0 text-muted" id="info-data"></p>
+                </div>
+            </div>
+            <hr>
+            <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-2">Descrição</p>
+            <div class="caixa-descricao" id="info-descricao"></div>
+        </div>
+    </div>
+
+    <!-- Conversa -->
+    <div class="card page-card mb-3">
+        <div class="card-body">
+            <p class="text-muted rotulo-secao fw-semibold text-uppercase mb-3">Conversa</p>
+            <div id="lista-comentarios">
+                <p class="text-muted text-center py-3">Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responder -->
+    <div class="card page-card" id="card-responder">
+        <div class="card-body">
+            <form id="form-resposta">
+                <div class="mb-3">
+                    <label for="id_mensagem" class="form-label fw-semibold small">Adicionar resposta</label>
+                    <textarea id="id_mensagem" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">
+                        <span id="btn-resp-texto">Enviar</span>
+                        <span id="btn-resp-spinner" class="spinner-border spinner-border-sm d-none ms-1" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+    import { requireAuth, preencherNavbar, getUsuario,
+             STATUS_DISPLAY, PRIORIDADE_DISPLAY, CATEGORIA_DISPLAY,
+             formatarData, linebreaksbr, mostrarAlerta } from "../../../assets/js/auth.js";
+    import { getChamado, getComentarios, adicionarComentario } from "../../../assets/js/api.js";
+    import "../../../assets/js/notificacoes.js";
+
+    requireAuth();
+    preencherNavbar();
+
+    const params = new URLSearchParams(location.search);
+    const chamadoId = params.get("id");
+    if (!chamadoId) window.location.href = "/pages/meus-chamados/index.html";
+
+    const msgs = document.getElementById("mensagens");
+    const user = getUsuario();
+
+    const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success" };
+    const BADGE_PRIO   = { alta: "bg-danger", media: "bg-warning text-dark", baixa: "bg-secondary" };
+
+    let chamadoDonoId;
+
+    async function carregar() {
+        const chamado = await getChamado(chamadoId);
+        chamadoDonoId = chamado.usuario;
+
+        // Verifica acesso: só o dono pode ver
+        if (chamado.usuario !== user.id) {
+            window.location.href = "/pages/dashboard/index.html";
+            return;
+        }
+
+        document.getElementById("chamado-id").textContent = "#" + chamado.id;
+        document.getElementById("chamado-titulo").textContent = chamado.titulo;
+        document.getElementById("info-categoria").textContent = CATEGORIA_DISPLAY[chamado.categoria] ?? chamado.categoria;
+        document.getElementById("info-data").textContent = formatarData(chamado.data_criacao);
+        document.getElementById("info-descricao").innerHTML = linebreaksbr(chamado.descricao);
+
+        document.getElementById("info-status").innerHTML =
+            `<span class="badge ${BADGE_STATUS[chamado.status] ?? "bg-secondary"}">${STATUS_DISPLAY[chamado.status] ?? chamado.status}</span>`;
+        document.getElementById("info-prioridade").innerHTML =
+            `<span class="badge ${BADGE_PRIO[chamado.prioridade] ?? "bg-secondary"}">${PRIORIDADE_DISPLAY[chamado.prioridade] ?? chamado.prioridade}</span>`;
+
+        // Oculta formulário de resposta se chamado concluído
+        if (chamado.status === "concluido") {
+            document.getElementById("card-responder").classList.add("d-none");
+        }
+
+        await carregarComentarios();
+    }
+
+    async function carregarComentarios() {
+        const dados = await getComentarios(chamadoId);
+        const comentarios = dados.results ?? dados;
+        const container = document.getElementById("lista-comentarios");
+
+        if (!comentarios.length) {
+            container.innerHTML = `<p class="text-muted text-center small py-2">Nenhuma mensagem ainda.</p>`;
+            return;
+        }
+
+        container.innerHTML = comentarios.map(c => {
+            const isCliente = c.usuario === chamadoDonoId;
+            return `
+                <div class="d-flex ${isCliente ? "flex-row-reverse" : ""} mb-3 gap-2">
+                    <div class="chat-bubble p-3 ${isCliente ? "chat-cliente" : "chat-admin"}">
+                        <p class="fw-semibold small mb-1">${c.usuario_username ?? ""}</p>
+                        <p class="mb-1 small">${linebreaksbr(c.texto)}</p>
+                        <p class="text-muted" style="font-size:.75rem;margin:0">${formatarData(c.data)}</p>
+                    </div>
+                </div>`;
+        }).join("");
+    }
+
+    document.getElementById("form-resposta").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msgs.innerHTML = "";
+        const btnText = document.getElementById("btn-resp-texto");
+        const spinner = document.getElementById("btn-resp-spinner");
+        btnText.textContent = "Enviando...";
+        spinner.classList.remove("d-none");
+
+        try {
+            await adicionarComentario(chamadoId, document.getElementById("id_mensagem").value.trim());
+            document.getElementById("id_mensagem").value = "";
+            await carregarComentarios();
+        } catch {
+            mostrarAlerta(msgs, "Erro ao enviar mensagem.", "danger");
+        } finally {
+            btnText.textContent = "Enviar";
+            spinner.classList.add("d-none");
+        }
+    });
+
+    carregar();
+</script>
+
+</body>
+</html>

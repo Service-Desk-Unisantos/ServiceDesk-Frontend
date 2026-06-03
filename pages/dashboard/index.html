@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Painel — ServiceDesk Facul</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/lista.css">
+    <style>
+        .sidebar-card { border-radius: 14px; border: 0; }
+        .chamado-row { cursor: pointer; transition: background .15s; }
+        .chamado-row:hover { background: #f1f4f9; }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/pages/dashboard/index.html">
+            <i class="bi bi-headset me-2 text-primary"></i>ServiceDesk Facul
+        </a>
+        <div class="text-white d-flex align-items-center">
+            <span class="me-2 small text-white-50">Logado como:</span>
+            <span class="fw-bold me-3 text-info" id="navbar-username"></span>
+            <span class="badge bg-danger shadow-sm px-3 py-2 d-none" id="navbar-badge-admin">
+                <i class="bi bi-shield-lock-fill me-1"></i>ADMINISTRADOR
+            </span>
+            <span class="badge bg-success shadow-sm px-3 py-2 d-none" id="navbar-badge-cliente">
+                <i class="bi bi-person-fill me-1"></i>CLIENTE
+            </span>
+            <a href="#" id="btn-logout" class="ms-3 btn btn-sm btn-outline-danger border-0 fw-bold">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Caixa de notificações -->
+<div id="caixa-notificacoes" class="position-fixed top-0 end-0 p-3"
+     style="z-index: 1080; width: min(92vw, 380px); pointer-events: none;"></div>
+
+<main class="container">
+    <div id="mensagens"></div>
+
+    <!-- Layout staff: tabela de todos os chamados -->
+    <div id="painel-admin" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-2 text-primary"></i>Todos os chamados</h5>
+        </div>
+        <div class="card page-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">#</th>
+                                <th>Título</th>
+                                <th>Usuário</th>
+                                <th>Categoria</th>
+                                <th>Status</th>
+                                <th>Prioridade</th>
+                                <th>Aberto em</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-admin-body">
+                            <tr><td colspan="8" class="text-center py-4 text-muted">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout cliente: resumo + chamados recentes -->
+    <div id="painel-cliente" class="d-none">
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card sidebar-card shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <i class="bi bi-person-circle fs-1 text-primary mb-3 d-block"></i>
+                        <h6 class="fw-bold mb-0" id="cliente-nome"></h6>
+                        <p class="text-muted small mb-3" id="cliente-email"></p>
+                        <div class="d-grid gap-2">
+                            <a href="/pages/chamado/novo/index.html" class="btn btn-primary btn-sm fw-bold">
+                                <i class="bi bi-plus-circle me-1"></i>Novo chamado
+                            </a>
+                            <a href="/pages/meus-chamados/index.html" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-clock-history me-1"></i>Ver histórico
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h6 class="fw-bold mb-3"><i class="bi bi-activity me-2 text-primary"></i>Chamados recentes</h6>
+                <div id="lista-cliente">
+                    <p class="text-muted">Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+    import { requireAuth, preencherNavbar, isStaff, getUsuario,
+             STATUS_DISPLAY, PRIORIDADE_DISPLAY, CATEGORIA_DISPLAY,
+             formatarData } from "../../assets/js/auth.js";
+    import { getChamados } from "../../assets/js/api.js";
+    import "../../assets/js/notificacoes.js";
+
+    requireAuth();
+    preencherNavbar();
+
+    const user = getUsuario();
+
+    const BADGE_STATUS = {
+        aberto:    "bg-warning text-dark",
+        andamento: "bg-info text-dark",
+        concluido: "bg-success",
+    };
+    const BADGE_PRIO = {
+        alta:  "bg-danger",
+        media: "bg-warning text-dark",
+        baixa: "bg-secondary",
+    };
+
+    if (isStaff()) {
+        document.getElementById("painel-admin").classList.remove("d-none");
+        carregarAdmin();
+    } else {
+        document.getElementById("painel-cliente").classList.remove("d-none");
+        document.getElementById("cliente-nome").textContent = `${user.first_name} ${user.last_name}`.trim() || user.username;
+        document.getElementById("cliente-email").textContent = user.email || "";
+        carregarCliente();
+    }
+
+    async function carregarAdmin() {
+        const tbody = document.getElementById("tabela-admin-body");
+        try {
+            const data = await getChamados();
+            const chamados = data.results ?? data;
+            if (!chamados.length) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum chamado encontrado.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = chamados.map(c => `
+                <tr class="chamado-row" onclick="window.location='/pages/chamado/detalhe-admin/index.html?id=${c.id}'">
+                    <td class="ps-4 text-muted">#${c.id}</td>
+                    <td class="fw-semibold">${c.titulo}</td>
+                    <td>${c.usuario_username ?? ""}</td>
+                    <td>${CATEGORIA_DISPLAY[c.categoria] ?? c.categoria}</td>
+                    <td><span class="badge ${BADGE_STATUS[c.status] ?? "bg-secondary"}">${STATUS_DISPLAY[c.status] ?? c.status}</span></td>
+                    <td><span class="badge ${BADGE_PRIO[c.prioridade] ?? "bg-secondary"}">${PRIORIDADE_DISPLAY[c.prioridade] ?? c.prioridade}</span></td>
+                    <td class="text-muted small">${formatarData(c.data_criacao)}</td>
+                    <td><i class="bi bi-chevron-right text-muted"></i></td>
+                </tr>
+            `).join("");
+        } catch {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-danger">Erro ao carregar chamados.</td></tr>`;
+        }
+    }
+
+    async function carregarCliente() {
+        const container = document.getElementById("lista-cliente");
+        try {
+            const data = await getChamados();
+            const chamados = (data.results ?? data).slice(0, 5);
+            if (!chamados.length) {
+                container.innerHTML = `<p class="text-muted">Você ainda não abriu nenhum chamado.</p>`;
+                return;
+            }
+            container.innerHTML = chamados.map(c => `
+                <a href="/pages/chamado/detalhe-cliente/index.html?id=${c.id}"
+                   class="card page-card mb-2 text-decoration-none text-dark">
+                    <div class="card-body py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">${c.titulo}</span>
+                            <span class="badge ms-2 ${BADGE_STATUS[c.status] ?? "bg-secondary"}">${STATUS_DISPLAY[c.status] ?? c.status}</span>
+                            ${c.prioridade === "alta" ? `<span class="badge bg-danger ms-1">Alta</span>` : ""}
+                        </div>
+                        <span class="text-muted small">${formatarData(c.data_criacao)}</span>
+                    </div>
+                </a>
+            `).join("");
+        } catch {
+            container.innerHTML = `<p class="text-danger">Erro ao carregar chamados.</p>`;
+        }
+    }
+</script>
+
+</body>
+</html>

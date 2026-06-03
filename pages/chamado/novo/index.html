@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Novo chamado — ServiceDesk Facul</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../../assets/css/base.css">
+    <link rel="stylesheet" href="../../../assets/css/criar.css">
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/pages/dashboard/index.html">
+            <i class="bi bi-headset me-2 text-primary"></i>ServiceDesk Facul
+        </a>
+        <div class="text-white d-flex align-items-center">
+            <span class="me-2 small text-white-50">Logado como:</span>
+            <span class="fw-bold me-3 text-info" id="navbar-username"></span>
+            <span class="badge bg-danger shadow-sm px-3 py-2 d-none" id="navbar-badge-admin">
+                <i class="bi bi-shield-lock-fill me-1"></i>ADMINISTRADOR
+            </span>
+            <span class="badge bg-success shadow-sm px-3 py-2 d-none" id="navbar-badge-cliente">
+                <i class="bi bi-person-fill me-1"></i>CLIENTE
+            </span>
+            <a href="#" id="btn-logout" class="ms-3 btn btn-sm btn-outline-danger border-0 fw-bold">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a href="/pages/dashboard/index.html" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h5 class="fw-bold mb-0"><i class="bi bi-ticket-detailed me-2 text-primary"></i>Abrir novo chamado</h5>
+            </div>
+
+            <div id="mensagens"></div>
+
+            <div class="card page-card p-4">
+                <form id="form-novo" class="ticket-form js-form-focus" novalidate>
+
+                    <div class="mb-3">
+                        <label for="id_titulo" class="form-label fw-semibold">
+                            Título <span class="required">*</span>
+                        </label>
+                        <input type="text" id="id_titulo" name="titulo" class="form-control" required maxlength="100">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_categoria" class="form-label fw-semibold">
+                            Categoria <span class="required">*</span>
+                        </label>
+                        <select id="id_categoria" name="categoria" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option value="hardware">Hardware</option>
+                            <option value="software">Software</option>
+                            <option value="rede">Rede</option>
+                            <option value="acesso">Acesso</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_prioridade" class="form-label fw-semibold">
+                            Prioridade <span class="required">*</span>
+                        </label>
+                        <select id="id_prioridade" name="prioridade" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option value="baixa">Baixa</option>
+                            <option value="media">Média</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_descricao" class="form-label fw-semibold">
+                            Descrição <span class="required">*</span>
+                        </label>
+                        <textarea id="id_descricao" name="descricao" class="form-control" rows="5" required></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="/pages/dashboard/index.html" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">
+                            <span id="btn-texto">Abrir chamado</span>
+                            <span id="btn-spinner" class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../../assets/js/base.js"></script>
+<script type="module">
+    import { requireAuth, preencherNavbar, mostrarAlerta } from "../../../assets/js/auth.js";
+    import { criarChamado } from "../../../assets/js/api.js";
+
+    requireAuth();
+    preencherNavbar();
+
+    const form    = document.getElementById("form-novo");
+    const msgs    = document.getElementById("mensagens");
+    const btnText = document.getElementById("btn-texto");
+    const spinner = document.getElementById("btn-spinner");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msgs.innerHTML = "";
+        btnText.textContent = "Enviando...";
+        spinner.classList.remove("d-none");
+
+        try {
+            await criarChamado({
+                titulo:    document.getElementById("id_titulo").value.trim(),
+                categoria: document.getElementById("id_categoria").value,
+                prioridade: document.getElementById("id_prioridade").value,
+                descricao: document.getElementById("id_descricao").value.trim(),
+            });
+            window.location.href = "/pages/dashboard/index.html";
+        } catch (err) {
+            const erros = err.data || {};
+            const texto = Object.values(erros).flat().join(" ") || "Erro ao abrir chamado.";
+            mostrarAlerta(msgs, texto, "danger");
+        } finally {
+            btnText.textContent = "Abrir chamado";
+            spinner.classList.add("d-none");
+        }
+    });
+</script>
+
+</body>
+</html>
