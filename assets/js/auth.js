@@ -1,4 +1,18 @@
-import { login as apiLogin, logout as apiLogout, cadastrar } from "./api.js";
+import { login as apiLogin, logout as apiLogout, cadastrar, API_BASE } from "./api.js";
+
+async function verificarBackend() {
+    try {
+        await fetch(`${API_BASE}/chamados/`, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("sd_access_token")}` },
+            signal: AbortSignal.timeout(3000),
+        });
+    } catch {
+        const banner = document.createElement("div");
+        banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;padding:.75rem;background:#dc3545;color:#fff;text-align:center;font-weight:600;";
+        banner.textContent = "⚠️ Servidor indisponível — nenhuma operação pode ser salva.";
+        document.body.prepend(banner);
+    }
+}
 
 // Mapas de exibição (substituem os filtros Django get_FOO_display)
 export const STATUS_DISPLAY = {
@@ -41,7 +55,9 @@ export function isStaff() {
 export function requireAuth() {
     if (!isAuthenticated()) {
         window.location.href = "/pages/login/index.html";
+        return;
     }
+    verificarBackend();
 }
 
 // ── Navbar ─────────────────────────────────────────────────────────────────────

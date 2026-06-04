@@ -8,6 +8,16 @@ export function getHeaders() {
     };
 }
 
+async function apiFetch(url, options = {}) {
+    try {
+        return await fetch(url, options);
+    } catch {
+        const err = new Error("Servidor indisponível. Verifique se o backend está rodando.");
+        err.isNetworkError = true;
+        throw err;
+    }
+}
+
 async function handleResponse(res) {
     if (res.status === 401) {
         // Token expirado — tenta renovar automaticamente
@@ -29,7 +39,7 @@ async function handleResponse(res) {
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 export async function login(username, password) {
-    const res = await fetch(`${API_BASE}/auth/login/`, {
+    const res = await apiFetch(`${API_BASE}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -40,7 +50,7 @@ export async function login(username, password) {
 export async function renovarToken() {
     const refresh = localStorage.getItem("sd_refresh_token");
     if (!refresh) return false;
-    const res = await fetch(`${API_BASE}/auth/refresh/`, {
+    const res = await apiFetch(`${API_BASE}/auth/refresh/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh }),
@@ -63,7 +73,7 @@ export async function logout() {
 }
 
 export async function cadastrar(dados) {
-    const res = await fetch(`${API_BASE}/auth/cadastro/`, {
+    const res = await apiFetch(`${API_BASE}/auth/cadastro/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados),
@@ -75,21 +85,21 @@ export async function cadastrar(dados) {
 
 export async function getChamados(params = {}) {
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_BASE}/chamados/${query ? "?" + query : ""}`, {
+    const res = await apiFetch(`${API_BASE}/chamados/${query ? "?" + query : ""}`, {
         headers: getHeaders(),
     });
     return handleResponse(res);
 }
 
 export async function getChamado(id) {
-    const res = await fetch(`${API_BASE}/chamados/${id}/`, {
+    const res = await apiFetch(`${API_BASE}/chamados/${id}/`, {
         headers: getHeaders(),
     });
     return handleResponse(res);
 }
 
 export async function criarChamado(dados) {
-    const res = await fetch(`${API_BASE}/chamados/`, {
+    const res = await apiFetch(`${API_BASE}/chamados/`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(dados),
@@ -98,7 +108,7 @@ export async function criarChamado(dados) {
 }
 
 export async function atualizarChamado(id, dados) {
-    const res = await fetch(`${API_BASE}/chamados/${id}/`, {
+    const res = await apiFetch(`${API_BASE}/chamados/${id}/`, {
         method: "PATCH",
         headers: getHeaders(),
         body: JSON.stringify(dados),
@@ -109,14 +119,14 @@ export async function atualizarChamado(id, dados) {
 // ── Comentários ───────────────────────────────────────────────────────────────
 
 export async function getComentarios(chamadoId) {
-    const res = await fetch(`${API_BASE}/chamados/${chamadoId}/comentarios/`, {
+    const res = await apiFetch(`${API_BASE}/chamados/${chamadoId}/comentarios/`, {
         headers: getHeaders(),
     });
     return handleResponse(res);
 }
 
 export async function adicionarComentario(chamadoId, texto) {
-    const res = await fetch(`${API_BASE}/chamados/${chamadoId}/comentarios/`, {
+    const res = await apiFetch(`${API_BASE}/chamados/${chamadoId}/comentarios/`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({ texto }),
@@ -127,7 +137,7 @@ export async function adicionarComentario(chamadoId, texto) {
 // ── Notificações ──────────────────────────────────────────────────────────────
 
 export async function getNotificacoes() {
-    const res = await fetch(`${API_BASE}/notificacoes/`, {
+    const res = await apiFetch(`${API_BASE}/notificacoes/`, {
         headers: getHeaders(),
     });
     return handleResponse(res);

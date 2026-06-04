@@ -105,7 +105,9 @@
         try {
             await handleLogin(username, password);
         } catch (err) {
-            const msg = err.data?.detail || "Usuário ou senha incorretos.";
+            const msg = err.isNetworkError
+                ? err.message
+                : (err.data?.detail || "Usuário ou senha incorretos.");
             mostrarAlerta(msgs, msg, "danger");
         } finally {
             btnText.textContent = "Entrar";

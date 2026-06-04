@@ -140,6 +140,7 @@
     const msgs = document.getElementById("mensagens");
 
     async function carregar() {
+        try {
         const chamado = await getChamado(chamadoId);
         document.getElementById("chamado-id").textContent = "#" + chamado.id;
         document.getElementById("chamado-titulo").textContent = chamado.titulo;
@@ -156,6 +157,9 @@
         document.getElementById("id_prioridade").value = chamado.prioridade;
 
         await carregarComentarios(chamado.usuario);
+        } catch (err) {
+            msgs.innerHTML = `<div class="alert alert-danger">${err.message || "Erro ao carregar chamado."}</div>`;
+        }
     }
 
     async function carregarComentarios(donoId) {

@@ -133,6 +133,7 @@
     let chamadoDonoId;
 
     async function carregar() {
+        try {
         const chamado = await getChamado(chamadoId);
         chamadoDonoId = chamado.usuario;
 
@@ -159,6 +160,9 @@
         }
 
         await carregarComentarios();
+        } catch (err) {
+            msgs.innerHTML = `<div class="alert alert-danger">${err.message || "Erro ao carregar chamado."}</div>`;
+        }
     }
 
     async function carregarComentarios() {
