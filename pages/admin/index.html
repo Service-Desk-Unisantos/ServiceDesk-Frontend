@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin — ServiceDesk Facul</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/pages/dashboard/index.html">
+            <i class="bi bi-headset me-2 text-primary"></i>ServiceDesk Facul
+        </a>
+        <div class="text-white d-flex align-items-center">
+            <span class="me-2 small text-white-50">Logado como:</span>
+            <span class="fw-bold me-3 text-info" id="navbar-username"></span>
+            <span class="badge bg-danger shadow-sm px-3 py-2 d-none" id="navbar-badge-admin">
+                <i class="bi bi-shield-lock-fill me-1"></i>ADMINISTRADOR
+            </span>
+            <a href="#" id="btn-logout" class="ms-3 btn btn-sm btn-outline-danger border-0 fw-bold">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Caixa de notificações -->
+<div id="caixa-notificacoes" class="position-fixed top-0 end-0 p-3"
+     style="z-index:1080; width:min(92vw,380px); pointer-events:none;"></div>
+
+<main class="container">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/pages/dashboard/index.html" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-shield-lock me-2 text-danger"></i>Área Administrativa
+        </h5>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+
+            <!-- Card Django Admin -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <span class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center"
+                              style="width:72px;height:72px;">
+                            <i class="bi bi-shield-lock-fill text-danger fs-2"></i>
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-1">Painel Administrativo Django</h5>
+                    <p class="text-muted small mb-4">
+                        Gerencie usuários, permissões, registros do banco de dados
+                        e configurações avançadas do sistema.
+                    </p>
+
+                    <a href="http://localhost:8000/admin/" target="_blank" rel="noopener"
+                       class="btn btn-danger fw-bold px-4 py-2 mb-3 w-100">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Acessar Django Admin
+                    </a>
+
+                    <div class="alert alert-warning d-flex align-items-start gap-2 text-start mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                        <div class="small">
+                            O Django Admin usa autenticação própria. Será necessário fazer
+                            login novamente com suas credenciais de administrador na tela que abrir.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card recursos disponíveis -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <p class="fw-semibold small text-uppercase text-muted mb-3" style="letter-spacing:.06em;">
+                        O que você pode gerenciar
+                    </p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                            <i class="bi bi-people-fill text-primary"></i>
+                            <span class="small">Usuários e grupos de permissão</span>
+                        </li>
+                        <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                            <i class="bi bi-ticket-detailed-fill text-warning"></i>
+                            <span class="small">Chamados e comentários</span>
+                        </li>
+                        <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                            <i class="bi bi-bell-fill text-info"></i>
+                            <span class="small">Notificações</span>
+                        </li>
+                        <li class="d-flex align-items-center gap-2 py-2">
+                            <i class="bi bi-key-fill text-success"></i>
+                            <span class="small">Tokens de autenticação</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/base.js"></script>
+<script type="module">
+    import { requireAuth, preencherNavbar, isStaff } from "../../assets/js/auth.js";
+    import "../../assets/js/notificacoes.js";
+
+    requireAuth();
+    if (!isStaff()) window.location.href = "/pages/dashboard/index.html";
+    preencherNavbar();
+</script>
+
+</body>
+</html>
