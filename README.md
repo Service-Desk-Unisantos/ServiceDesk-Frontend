@@ -8,25 +8,17 @@ Interface do usuário do sistema ServiceDesk — consome a API REST do backend p
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Framework | [React 18](https://react.dev/) (ou Vue / Next.js — ajuste conforme o projeto) |
-| Linguagem | TypeScript |
-| Estilização | [Tailwind CSS](https://tailwindcss.com/) (ou Bootstrap — ajuste conforme o projeto) |
-| Gerenciamento de estado | Context API / Zustand |
-| Requisições HTTP | Axios |
-| Roteamento | React Router v6 |
-
-> Ajuste a tabela acima para refletir as tecnologias reais utilizadas no repositório.
+| Linguagem | HTML, CSS, JavaScript |
+| Framework UI | [Bootstrap 5.3](https://getbootstrap.com/) (via CDN) |
+| Ícones | Bootstrap Icons 1.11 (via CDN) |
+| Requisições HTTP | Fetch API (nativa) |
 
 ---
 
 ## Conexão com o backend
 
 A interface se comunica exclusivamente via API REST do backend (ver [servicedesk-backend](../servicedesk-backend)).  
-Configure a URL base da API no arquivo de variáveis de ambiente:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
-```
+A URL base da API está configurada diretamente em `assets/js/api.js`.
 
 A autenticação é feita por **JWT**: o token de acesso é armazenado em memória e o refresh token em cookie HttpOnly.
 
@@ -34,25 +26,17 @@ A autenticação é feita por **JWT**: o token de acesso é armazenado em memór
 
 ## Configuração e instalação
 
-**Pré-requisitos:** Node.js 18+
+Projeto estático — sem dependências de instalação.
 
 ```bash
 # 1. Clonar o repositório
 git clone <url-do-repositorio>
 cd servicedesk-frontend
-
-# 2. Instalar dependências
-npm install
-
-# 3. Configurar variáveis de ambiente
-cp .env.example .env.local
-# Preencher VITE_API_BASE_URL com a URL do backend
-
-# 4. Iniciar em modo desenvolvimento
-npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:5173` por padrão.
+Abra qualquer página em `pages/` diretamente no navegador, ou use um servidor local (ex: extensão **Live Server** no VS Code).
+
+Antes de usar, configure a URL do backend em `assets/js/api.js`.
 
 ---
 
