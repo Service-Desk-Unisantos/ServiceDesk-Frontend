@@ -92,6 +92,12 @@
     const msgs    = document.getElementById("mensagens");
     const btnText = document.getElementById("btn-login-texto");
     const spinner = document.getElementById("btn-login-spinner");
+    const params  = new URLSearchParams(window.location.search);
+
+    if (params.has("google_error")) {
+        mostrarAlerta(msgs, "Não foi possível concluir o login com Google.", "danger");
+        window.history.replaceState(null, "", window.location.pathname);
+    }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();

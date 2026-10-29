@@ -27,14 +27,6 @@ export const PRIORIDADE_DISPLAY = {
     alta: "Alta",
 };
 
-export const CATEGORIA_DISPLAY = {
-    hardware: "Hardware",
-    software: "Software",
-    rede: "Rede",
-    acesso: "Acesso",
-    outros: "Outros",
-};
-
 // ── Sessão ────────────────────────────────────────────────────────────────────
 
 export function getUsuario() {

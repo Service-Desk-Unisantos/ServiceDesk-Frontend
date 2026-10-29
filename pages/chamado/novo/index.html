@@ -61,13 +61,8 @@
                         <label for="id_categoria" class="form-label fw-semibold">
                             Categoria <span class="required">*</span>
                         </label>
-                        <select id="id_categoria" name="categoria" class="form-select" required>
-                            <option value="">Selecione...</option>
-                            <option value="hardware">Hardware</option>
-                            <option value="software">Software</option>
-                            <option value="rede">Rede</option>
-                            <option value="acesso">Acesso</option>
-                            <option value="outros">Outros</option>
+                        <select id="id_categoria" name="categoria" class="form-select" required disabled>
+                            <option value="">Carregando...</option>
                         </select>
                     </div>
 
@@ -108,10 +103,24 @@
 <script src="../../../assets/js/base.js"></script>
 <script type="module">
     import { requireAuth, preencherNavbar, mostrarAlerta } from "../../../assets/js/auth.js";
-    import { criarChamado } from "../../../assets/js/api.js";
+    import { criarChamado, getCategorias } from "../../../assets/js/api.js";
 
     requireAuth();
     preencherNavbar();
+
+    // Categorias cadastradas pelos administradores (somente as ativas).
+    async function carregarCategorias() {
+        const select = document.getElementById("id_categoria");
+        try {
+            const categorias = await getCategorias() ?? [];
+            select.replaceChildren(new Option("Selecione...", ""));
+            categorias.forEach(c => select.add(new Option(c.nome, c.slug)));
+            select.disabled = false;
+        } catch {
+            select.replaceChildren(new Option("Erro ao carregar categorias", ""));
+        }
+    }
+    carregarCategorias();
 
     const form    = document.getElementById("form-novo");
     const msgs    = document.getElementById("mensagens");
