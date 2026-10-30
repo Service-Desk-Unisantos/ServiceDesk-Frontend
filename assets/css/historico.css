@@ -1,0 +1,19 @@
+.historico-tabela th {
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 110px;
+}
+
+.historico-tabela .form-control,
+.historico-tabela .form-select {
+    border-radius: 999px;
+}
+
+.historico-tabela tbody tr + tr td {
+    border-top: 1px solid #f1f3f5;
+}
+
+.historico-valor {
+    max-width: 280px;
+    overflow-wrap: anywhere;
+}
