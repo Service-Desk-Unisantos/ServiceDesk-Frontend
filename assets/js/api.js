@@ -134,6 +134,15 @@ export async function adicionarComentario(chamadoId, texto) {
     return handleResponse(res);
 }
 
+// ── Histórico ─────────────────────────────────────────────────────────────────
+
+export async function getHistorico(chamadoId) {
+    const res = await apiFetch(`${API_BASE}/chamados/${chamadoId}/historico/`, {
+        headers: getHeaders(),
+    });
+    return handleResponse(res);
+}
+
 // ── Notificações ──────────────────────────────────────────────────────────────
 
 export async function getNotificacoes() {
