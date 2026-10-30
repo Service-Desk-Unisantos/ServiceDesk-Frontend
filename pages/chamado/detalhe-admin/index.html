@@ -145,7 +145,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module">
     import { requireAuth, preencherNavbar, isStaff,
-             STATUS_DISPLAY, PRIORIDADE_DISPLAY, CATEGORIA_DISPLAY,
+             STATUS_DISPLAY, PRIORIDADE_DISPLAY,
              formatarData, linebreaksbr, mostrarAlerta } from "../../../assets/js/auth.js";
     import { getChamado, atualizarChamado, adicionarComentario, getComentarios } from "../../../assets/js/api.js";
     import { getUsuario } from "../../../assets/js/auth.js";
@@ -168,7 +168,7 @@
         document.getElementById("chamado-id").textContent = "#" + chamado.id;
         document.getElementById("chamado-titulo").textContent = chamado.titulo;
         document.getElementById("info-usuario").textContent = chamado.usuario_username ?? "";
-        document.getElementById("info-categoria").textContent = CATEGORIA_DISPLAY[chamado.categoria] ?? chamado.categoria;
+        document.getElementById("info-categoria").textContent = chamado.categoria_nome ?? chamado.categoria;
         document.getElementById("info-data").textContent = formatarData(chamado.data_criacao);
         document.getElementById("info-descricao").innerHTML = linebreaksbr(chamado.descricao);
 

@@ -81,6 +81,44 @@ export async function cadastrar(dados) {
     return handleResponse(res);
 }
 
+// ── Categorias ───────────────────────────────────────────────────────────────
+
+// Sem parâmetro: só ativas (formulário de chamado). todas=true: inclui inativas (somente staff).
+export async function getCategorias({ todas = false } = {}) {
+    const res = await apiFetch(`${API_BASE}/categorias/${todas ? "?todas=1" : ""}`, {
+        headers: getHeaders(),
+    });
+    return handleResponse(res);
+}
+
+export async function criarCategoria(dados) {
+    const res = await apiFetch(`${API_BASE}/categorias/`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(dados),
+    });
+    return handleResponse(res);
+}
+
+export async function atualizarCategoria(id, dados) {
+    const res = await apiFetch(`${API_BASE}/categorias/${id}/`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify(dados),
+    });
+    return handleResponse(res);
+}
+
+export async function excluirCategoria(id) {
+    const res = await apiFetch(`${API_BASE}/categorias/${id}/`, {
+        method: "DELETE",
+        headers: getHeaders(),
+    });
+    // 204 não tem corpo, então não passa pelo res.json() do handleResponse.
+    if (res.status === 204) return true;
+    return handleResponse(res);
+}
+
 // ── Chamados ─────────────────────────────────────────────────────────────────
 
 export async function getChamados(params = {}) {
