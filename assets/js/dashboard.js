@@ -8,8 +8,8 @@ const acessoPermitido = isStaff();
 if (!acessoPermitido) window.location.href = "/pages/dashboard/index.html";
 
 // Mesmas cores semânticas das badges do restante do sistema.
-const COR_STATUS = { aberto: "#ffc107", andamento: "#0dcaf0", concluido: "#198754" };
-const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success" };
+const COR_STATUS = { aberto: "#ffc107", andamento: "#0dcaf0", concluido: "#198754", cancelado: "#6c757d" };
+const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success", cancelado: "bg-secondary" };
 const BADGE_PRIO = { alta: "bg-danger", media: "bg-warning text-dark", baixa: "bg-secondary" };
 
 const $ = (id) => document.getElementById(id);
@@ -20,7 +20,7 @@ let recentes = [];
 const graficos = {};
 
 function setCarregando(on) {
-    ["kpi-ativos", "kpi-criticos", "kpi-tma", "kpi-resolvidos"].forEach((id) => $(id).classList.toggle("skeleton", on));
+    ["kpi-ativos", "kpi-criticos", "kpi-tma", "kpi-resolvidos", "kpi-cancelados"].forEach((id) => $(id).classList.toggle("skeleton", on));
     if (on) {
         $("tabela-body").innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
             <span class="spinner-border spinner-border-sm me-2"></span>Carregando...</td></tr>`;
@@ -71,6 +71,7 @@ function renderKpis(k) {
         el.innerHTML = `<span class="${cls}"><i class="bi ${icone}"></i> ${formatarHoras(Math.abs(dif))}</span> <span class="text-muted">vs período anterior</span>`;
     }
     $("kpi-resolvidos").textContent = k.resolvidos;
+    $("kpi-cancelados").textContent = k.cancelados ?? 0;
     variacao($("kpi-resolvidos-var"), k.resolvidos_variacao, k.resolvidos > 0 && k.resolvidos_anterior === 0);
 }
 
@@ -156,7 +157,7 @@ async function carregar() {
         $("dash-erro").textContent = e.message || "Erro ao carregar o dashboard.";
         $("dash-erro").classList.remove("d-none");
         $("tabela-body").innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Não foi possível carregar os dados.</td></tr>`;
-        ["kpi-ativos", "kpi-criticos", "kpi-tma", "kpi-resolvidos"].forEach((id) => { $(id).textContent = "—"; });
+        ["kpi-ativos", "kpi-criticos", "kpi-tma", "kpi-resolvidos", "kpi-cancelados"].forEach((id) => { $(id).textContent = "—"; });
     } finally {
         setCarregando(false);
     }

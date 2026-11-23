@@ -84,7 +84,7 @@
     if (isStaff()) window.location.href = "/pages/dashboard/index.html";
     preencherNavbar();
 
-    const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success" };
+    const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success", cancelado: "bg-secondary" };
     const BADGE_PRIO   = { alta: "bg-danger", media: "bg-warning text-dark", baixa: "bg-secondary" };
 
     const tbody = document.getElementById("tabela-body");

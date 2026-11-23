@@ -19,6 +19,7 @@ export const STATUS_DISPLAY = {
     aberto: "Aberto",
     andamento: "Em andamento",
     concluido: "Concluído",
+    cancelado: "Cancelado",
 };
 
 export const PRIORIDADE_DISPLAY = {

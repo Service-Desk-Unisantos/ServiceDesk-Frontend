@@ -109,6 +109,7 @@
                                 <option value="aberto">Aberto</option>
                                 <option value="andamento">Em andamento</option>
                                 <option value="concluido">Concluído</option>
+                                <option value="cancelado" disabled>Cancelado</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -128,6 +129,13 @@
                             <span id="btn-atualiza-spinner" class="spinner-border spinner-border-sm d-none ms-1" role="status"></span>
                         </button>
                     </form>
+                    <div id="area-cancelar" class="d-none">
+                        <hr>
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modal-cancelar">
+                            <i class="bi bi-x-circle me-1"></i>Cancelar chamado
+                        </button>
+                    </div>
+                    <div id="aviso-cancelado" class="alert alert-secondary small mt-3 mb-0 d-none"></div>
                 </div>
             </div>
         </div>
@@ -142,12 +150,38 @@
     </div>
 </main>
 
+<!-- Modal: cancelar chamado -->
+<div class="modal fade" id="modal-cancelar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Cancelar chamado</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small">O chamado será encerrado como <strong>Cancelado</strong> e o solicitante será notificado. Esta ação não pode ser desfeita.</p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm sugestao-motivo">Aberto por engano</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm sugestao-motivo">Resolvido pelo próprio solicitante</button>
+                </div>
+                <label for="id_motivo" class="form-label small fw-semibold">Motivo (opcional)</label>
+                <input type="text" id="id_motivo" class="form-control form-control-sm" maxlength="255">
+                <div id="erro-cancelar" class="text-danger small mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn btn-danger btn-sm fw-bold" id="btn-confirmar-cancelar">Confirmar cancelamento</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module">
     import { requireAuth, preencherNavbar, isStaff,
              STATUS_DISPLAY, PRIORIDADE_DISPLAY,
              formatarData, linebreaksbr, mostrarAlerta } from "../../../assets/js/auth.js";
-    import { getChamado, atualizarChamado, adicionarComentario, getComentarios } from "../../../assets/js/api.js";
+    import { getChamado, atualizarChamado, cancelarChamado, adicionarComentario, getComentarios } from "../../../assets/js/api.js";
     import { getUsuario } from "../../../assets/js/auth.js";
     import { iniciarHistorico } from "../../../assets/js/historico.js";
     import "../../../assets/js/notificacoes.js";
@@ -178,6 +212,16 @@
 
         document.getElementById("id_status").value    = chamado.status;
         document.getElementById("id_prioridade").value = chamado.prioridade;
+
+        const ativo = chamado.status === "aberto" || chamado.status === "andamento";
+        document.getElementById("area-cancelar").classList.toggle("d-none", !ativo);
+        const aviso = document.getElementById("aviso-cancelado");
+        aviso.classList.toggle("d-none", chamado.status !== "cancelado");
+        if (chamado.status === "cancelado") {
+            aviso.textContent = "Chamado cancelado" + (chamado.motivo_cancelamento ? `: ${chamado.motivo_cancelamento}` : ".");
+            document.querySelectorAll("#form-atualizacao select, #form-atualizacao textarea, #form-atualizacao button")
+                .forEach((el) => { el.disabled = true; });
+        }
 
         await carregarComentarios(chamado.usuario);
         } catch (err) {
@@ -233,6 +277,28 @@
         } finally {
             btnText.textContent = "Salvar alterações";
             spinner.classList.add("d-none");
+        }
+    });
+
+    document.querySelectorAll(".sugestao-motivo").forEach((b) =>
+        b.addEventListener("click", () => { document.getElementById("id_motivo").value = b.textContent; }));
+
+    document.getElementById("btn-confirmar-cancelar").addEventListener("click", async (e) => {
+        const btn = e.currentTarget;
+        const erro = document.getElementById("erro-cancelar");
+        erro.textContent = "";
+        btn.disabled = true;
+        try {
+            await cancelarChamado(chamadoId, document.getElementById("id_motivo").value.trim());
+            bootstrap.Modal.getInstance(document.getElementById("modal-cancelar")).hide();
+            mostrarAlerta(msgs, "Chamado cancelado.", "success");
+            historicoCarregado = false;
+            document.getElementById("conteudo-historico").innerHTML = "";
+            await carregar();
+        } catch (err) {
+            erro.textContent = err.data?.detail || "Erro ao cancelar chamado.";
+        } finally {
+            btn.disabled = false;
         }
     });
 
