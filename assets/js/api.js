@@ -181,6 +181,16 @@ export async function getHistorico(chamadoId) {
     return handleResponse(res);
 }
 
+// ── Usuários ──────────────────────────────────────────────────────────────────
+
+// Todos os usuários da plataforma, inclusive inativos (somente staff).
+export async function getUsuariosCadastrados() {
+    const res = await apiFetch(`${API_BASE}/usuarios/cadastrados/`, {
+        headers: getHeaders(),
+    });
+    return handleResponse(res);
+}
+
 // ── Notificações ──────────────────────────────────────────────────────────────
 
 export async function getNotificacoes() {
