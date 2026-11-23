@@ -145,6 +145,15 @@ export async function criarChamado(dados) {
     return handleResponse(res);
 }
 
+export async function cancelarChamado(id, motivo = "") {
+    const res = await apiFetch(`${API_BASE}/chamados/${id}/cancelar/`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ motivo }),
+    });
+    return handleResponse(res);
+}
+
 export async function atualizarChamado(id, dados) {
     const res = await apiFetch(`${API_BASE}/chamados/${id}/`, {
         method: "PATCH",

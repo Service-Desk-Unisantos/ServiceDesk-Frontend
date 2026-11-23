@@ -150,7 +150,7 @@
     const msgs = document.getElementById("mensagens");
     const user = getUsuario();
 
-    const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success" };
+    const BADGE_STATUS = { aberto: "bg-warning text-dark", andamento: "bg-info text-dark", concluido: "bg-success", cancelado: "bg-secondary" };
     const BADGE_PRIO   = { alta: "bg-danger", media: "bg-warning text-dark", baixa: "bg-secondary" };
 
     let chamadoDonoId;
@@ -177,8 +177,13 @@
         document.getElementById("info-prioridade").innerHTML =
             `<span class="badge ${BADGE_PRIO[chamado.prioridade] ?? "bg-secondary"}">${PRIORIDADE_DISPLAY[chamado.prioridade] ?? chamado.prioridade}</span>`;
 
-        // Oculta formulário de resposta se chamado concluído
-        if (chamado.status === "concluido") {
+        if (chamado.status === "cancelado" && chamado.motivo_cancelamento) {
+            document.getElementById("info-status").insertAdjacentHTML("beforeend",
+                ` <span class="text-muted small">— ${chamado.motivo_cancelamento.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]))}</span>`);
+        }
+
+        // Oculta formulário de resposta se chamado concluído ou cancelado
+        if (chamado.status === "concluido" || chamado.status === "cancelado") {
             document.getElementById("card-responder").classList.add("d-none");
         }
 
