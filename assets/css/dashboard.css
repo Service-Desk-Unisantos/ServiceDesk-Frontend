@@ -1,0 +1,9 @@
+.kpi-card { border: 0; border-radius: 14px; box-shadow: var(--sd-card-shadow); }
+.kpi-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.kpi-valor { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.chart-box { position: relative; height: 280px; }
+.chamado-row { cursor: pointer; transition: background .15s; }
+.chamado-row:hover { background: #f1f4f9; }
+.skeleton { display: inline-block; min-width: 3rem; min-height: 1em; border-radius: 6px; background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%); background-size: 200% 100%; animation: sk 1.2s infinite; color: transparent !important; }
+@keyframes sk { to { background-position: -200% 0; } }
+.chart-vazio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6c757d; }

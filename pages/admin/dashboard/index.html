@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — ServiceDesk Facul</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../../assets/css/base.css">
+    <link rel="stylesheet" href="../../../assets/css/lista.css">
+    <link rel="stylesheet" href="../../../assets/css/dashboard.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/pages/dashboard/index.html">
+            <i class="bi bi-headset me-2 text-primary"></i>ServiceDesk Facul
+        </a>
+        <div class="text-white d-flex align-items-center">
+            <span class="me-2 small text-white-50">Logado como:</span>
+            <span class="fw-bold me-3 text-info" id="navbar-username"></span>
+            <span class="badge bg-danger shadow-sm px-3 py-2 d-none" id="navbar-badge-admin">
+                <i class="bi bi-shield-lock-fill me-1"></i>ADMINISTRADOR
+            </span>
+            <span class="badge bg-success shadow-sm px-3 py-2 d-none" id="navbar-badge-cliente">
+                <i class="bi bi-person-fill me-1"></i>CLIENTE
+            </span>
+            <a href="#" id="btn-logout" class="ms-3 btn btn-sm btn-outline-danger border-0 fw-bold">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="container pb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h5>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/pages/chamado/novo/index.html" class="btn btn-sm btn-primary fw-semibold">
+                <i class="bi bi-plus-circle me-1"></i>Novo chamado
+            </a>
+            <a href="/pages/dashboard/index.html" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-list-ul me-1"></i>Chamados
+            </a>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Período" id="filtro-periodo">
+                <button type="button" class="btn btn-outline-primary" data-periodo="hoje">Hoje</button>
+                <button type="button" class="btn btn-outline-primary" data-periodo="7d">7 dias</button>
+                <button type="button" class="btn btn-outline-primary" data-periodo="30d">30 dias</button>
+                <button type="button" class="btn btn-outline-primary" data-periodo="mes">Este mês</button>
+                <button type="button" class="btn btn-outline-primary active" data-periodo="tudo">Tudo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dash-erro" class="alert alert-danger d-none" role="alert"></div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card kpi-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="kpi-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-folder2-open"></i></div>
+                <div>
+                    <div class="small text-muted">Abertos / em andamento</div>
+                    <div class="kpi-valor" id="kpi-ativos">0</div>
+                    <div class="small" id="kpi-ativos-var"></div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card kpi-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="kpi-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="small text-muted">Alta prioridade pendentes</div>
+                    <div class="kpi-valor" id="kpi-criticos">0</div>
+                    <div class="small text-muted">aguardando resolução</div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card kpi-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="kpi-icon bg-info bg-opacity-10 text-info"><i class="bi bi-stopwatch"></i></div>
+                <div>
+                    <div class="small text-muted">Tempo médio de atendimento</div>
+                    <div class="kpi-valor" id="kpi-tma">0</div>
+                    <div class="small" id="kpi-tma-var"></div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card kpi-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="kpi-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <div class="small text-muted" title="Contados pela data de conclusão do chamado, mesmo que ele tenha sido aberto antes do período.">Resolvidos no período <i class="bi bi-info-circle"></i></div>
+                    <div class="kpi-valor" id="kpi-resolvidos">0</div>
+                    <div class="small" id="kpi-resolvidos-var"></div>
+                </div>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="card page-card h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3">Distribuição por status</h6>
+                <div class="chart-box"><canvas id="grafico-status"></canvas></div>
+            </div></div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card page-card h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3">Evolução: abertos × resolvidos</h6>
+                <div class="chart-box"><canvas id="grafico-evolucao"></canvas></div>
+            </div></div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card page-card h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3">Chamados por categoria</h6>
+                <div class="chart-box"><canvas id="grafico-categoria"></canvas></div>
+            </div></div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card page-card h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3">Chamados por solicitante</h6>
+                <div class="chart-box"><canvas id="grafico-solicitante"></canvas></div>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card page-card">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h6 class="fw-bold mb-0">Chamados</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <input type="search" id="busca" class="form-control form-control-sm" style="width: 220px" placeholder="Buscar por texto...">
+                    <select id="filtro-status" class="form-select form-select-sm" style="width: auto">
+                        <option value="">Todos os status</option>
+                        <option value="aberto">Aberto</option>
+                        <option value="andamento">Em andamento</option>
+                        <option value="concluido">Concluído</option>
+                    </select>
+                    <select id="filtro-prioridade" class="form-select form-select-sm" style="width: auto">
+                        <option value="">Todas as prioridades</option>
+                        <option value="alta">Alta</option>
+                        <option value="media">Média</option>
+                        <option value="baixa">Baixa</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Título</th><th>Solicitante</th><th>Categoria</th>
+                            <th>Prioridade</th><th>Status</th><th>Aberto em</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-body"></tbody>
+                </table>
+            </div>
+            <div class="small text-muted mt-2" id="tabela-rodape"></div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="module" src="../../../assets/js/dashboard.js"></script>
+</body>
+</html>
