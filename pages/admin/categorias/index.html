@@ -95,6 +95,53 @@
     </div>
 </main>
 
+<!-- Modal: categoria com chamados não pode ser excluída -->
+<div class="modal fade" id="modal-categoria-em-uso" tabindex="-1" aria-labelledby="modal-categoria-em-uso-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modal-categoria-em-uso-titulo">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Não é possível excluir
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="modal-categoria-em-uso-texto"></p>
+                <p class="text-muted small mb-0">
+                    Para que ela deixe de aparecer na abertura de chamados, desative a categoria em vez de excluir.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary fw-semibold" data-bs-dismiss="modal">Ok</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: confirmação de exclusão (categoria sem chamados) -->
+<div class="modal fade" id="modal-excluir-categoria" tabindex="-1" aria-labelledby="modal-excluir-categoria-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modal-excluir-categoria-titulo">
+                    <i class="bi bi-trash-fill text-danger me-2"></i>Excluir categoria
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="modal-excluir-categoria-texto"></p>
+                <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger fw-semibold" id="btn-confirmar-exclusao">
+                    <i class="bi bi-trash me-1"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../../assets/js/base.js"></script>
 <script type="module">
@@ -126,12 +173,69 @@
         return Object.values(erros).flat().join(" ") || padrao;
     }
 
+    const modalEmUso = new bootstrap.Modal(document.getElementById("modal-categoria-em-uso"));
+
+    const elModalExcluir       = document.getElementById("modal-excluir-categoria");
+    const modalExcluir         = new bootstrap.Modal(elModalExcluir);
+    const btnConfirmarExclusao = document.getElementById("btn-confirmar-exclusao");
+    let categoriaParaExcluir   = null;
+
+    // Categoria sem chamados: pede confirmação em um modal antes de excluir.
+    function pedirConfirmacaoExclusao(categoria) {
+        categoriaParaExcluir = categoria;
+        document.getElementById("modal-excluir-categoria-texto").innerHTML =
+            `Deseja realmente excluir a categoria <strong>${escapar(categoria.nome)}</strong>?`;
+        modalExcluir.show();
+    }
+
+    elModalExcluir.addEventListener("hidden.bs.modal", () => {
+        btnConfirmarExclusao.disabled = false;
+    });
+
+    btnConfirmarExclusao.addEventListener("click", async () => {
+        const categoria = categoriaParaExcluir;
+        if (!categoria) return;
+        btnConfirmarExclusao.disabled = true;
+        msgs.innerHTML = "";
+
+        let erro = null;
+        try {
+            await excluirCategoria(categoria.id);
+        } catch (err) {
+            erro = err;
+        }
+
+        // Fecha o modal de confirmação e só então mostra o resultado (evita dois modais sobrepostos).
+        elModalExcluir.addEventListener("hidden.bs.modal", async () => {
+            if (!erro) {
+                mostrarAlerta(msgs, `Categoria <strong>${escapar(categoria.nome)}</strong> excluída.`, "success");
+                await carregar();
+            } else if (erro.status === 409) {
+                // O backend também bloqueia caso um chamado tenha sido criado depois que a lista carregou.
+                await carregar();
+                avisarCategoriaEmUso(categorias.find(c => c.id === categoria.id) ?? categoria);
+            } else {
+                mostrarAlerta(msgs, escapar(mensagemDeErro(erro, "Erro ao excluir categoria.")), "danger");
+            }
+        }, { once: true });
+        modalExcluir.hide();
+    });
+
+    // Categoria com chamados não pode ser excluída: avisa em um modal e a exclusão não é feita.
+    function avisarCategoriaEmUso(categoria) {
+        const total = categoria.total_chamados;
+        const quantidade = total > 0
+            ? `${total} chamado${total === 1 ? "" : "s"} vinculado${total === 1 ? "" : "s"}`
+            : "chamados vinculados";
+        document.getElementById("modal-categoria-em-uso-texto").innerHTML =
+            `A categoria <strong>${escapar(categoria.nome)}</strong> já possui ${quantidade} e por isso não pode ser excluída.`;
+        modalEmUso.show();
+    }
+
     function linha(c) {
         const situacao = c.ativa
             ? `<span class="badge bg-success">Ativa</span>`
             : `<span class="badge bg-secondary">Inativa</span>`;
-        // Categoria com chamados não pode ser excluída, apenas desativada.
-        const podeExcluir = c.total_chamados === 0;
         return `
             <tr data-id="${c.id}">
                 <td class="ps-4">
@@ -152,8 +256,7 @@
                             title="${c.ativa ? "Desativar" : "Ativar"}">
                         <i class="bi ${c.ativa ? "bi-eye-slash" : "bi-eye"}"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger js-excluir" ${podeExcluir ? "" : "disabled"}
-                            title="${podeExcluir ? "Excluir" : "Possui chamados — desative em vez de excluir"}">
+                    <button class="btn btn-sm btn-outline-danger js-excluir" title="Excluir">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -216,14 +319,12 @@
             }
         } else if (e.target.closest(".js-excluir")) {
             msgs.innerHTML = "";
-            if (!confirm(`Excluir a categoria "${categoria.nome}"?`)) return;
-            try {
-                await excluirCategoria(categoria.id);
-                mostrarAlerta(msgs, `Categoria <strong>${escapar(categoria.nome)}</strong> excluída.`, "success");
-                await carregar();
-            } catch (err) {
-                mostrarAlerta(msgs, escapar(mensagemDeErro(err, "Erro ao excluir categoria.")), "danger");
+            // Já existe chamado nessa categoria: mostra o aviso e não segue com a exclusão.
+            if (categoria.total_chamados > 0) {
+                avisarCategoriaEmUso(categoria);
+                return;
             }
+            pedirConfirmacaoExclusao(categoria);
         }
     });
 
